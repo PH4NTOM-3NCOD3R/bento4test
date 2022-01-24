@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+<link rel="stylesheet" href="https://cdn.plyr.io/3.6.12/plyr.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+
+</head>
+<style>
+.container {
+	margin: 50px auto;
+	max-width: 1500px;
+}
+</style>
+<body>
+<div class="container">
+    <video controls crossorigin id="videoContainer"></video>
+</div>
+<script src="https://polyfill.io/v3/polyfill.min.js"></script>
+<script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
+<!-- Plyr resources and browser polyfills are specified in the pen settings -->
+<script src="https://cdn.plyr.io/3.6.12/plyr.polyfilled.js"></script>
+<script>
+const video = document.getElementById("videoContainer");
+document.addEventListener("DOMContentLoaded", function(){
+  const source = "https://raw.githubusercontent.com/PH4NTOM-3NCOD3R/bento4test/main/stream.mpd";
+  const dash = dashjs.MediaPlayer().create();
+  var defaultOptions = {
+    "ratio":"16:9",
+    "autoplay":false,
+    "muted":false,
+    "loop":{
+      "active":false
+    },
+    "captions":{
+      "active":true,
+      "update":true
+    }
+  };
+
+  dash.initialize(video, source, false);
+  dash.updateSettings({
+    streaming: {
+      abr: {
+        autoSwitchBitrate: {audio: false, video: false}
+      },
+      fastSwitchEnabled: true,
+      lowLatencyEnabled: true
+    }
+  });
+  dash.on("streamInitialized", function() {
+    const availableQualities = dash.getBitrateInfoListFor("video").map((l) => l.height);
+    defaultOptions.quality = {
+      default: availableQualities[0].height,
+      options: availableQualities,
+      forced: true,
+      onChange: function (newQuality) {
+        dash.getBitrateInfoListFor("video").forEach((level, levelIndex) => {
+          if (level.height === newQuality) {
+            dash.setQualityFor("video", level.qualityIndex);
+          }
+        });
+      },
+    };
+    const player = new Plyr(video, defaultOptions);
+    window.player = player;
+    window.dash = dash;
+  });
+  dash.attachView(video);
+});
+</script>
+</body>
+</html>
